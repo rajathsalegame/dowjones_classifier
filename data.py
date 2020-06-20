@@ -1,10 +1,8 @@
 import numpy as np 
 import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
 import os
-import sys
+import pandas as pd
 import yfinance as yf
-from pprint import pprint
 from datetime import datetime
 from utils import *
 
@@ -17,42 +15,48 @@ class Portfolio:
 		period (str):
 		returns (pandas df):
 		sec (pandas df)
-		fields (list)
+		data_types (list)
 	'''
 
-	def __init__(self,name,assets,returns,period,index_by_date=True):
+	def __init__(self,name,assets,returns,start,end):
 		'''
 		args:
 			assets (list):
 			returns (pandas df):
 			period (str):
 			sec (pandas df):
-			fields (list):	
+			data_types (list):	
 			index_by_date (bool):
 		'''
 		self.name = name
 		self.nassets = len(assets)
-		self.period = period
 		self.returns = returns
 		self.assets = assets
 		for asset in assets:
-			setattr(self, asset, yf.Ticker(asset).history(period=period))
-		self.fields = list(returns.columns)
+			setattr(self, asset, yf.Ticker(asset).history(start=start,end=end))
+		self.data_types = list(returns.columns)
 		self.dates = list(returns.index)
 		self.ndates = len(self.dates)
 
-	def plot(self, assets,field,start,end,plot_type=None):
+	def price_plot(self, assets,data_type,start,end,plot_type=None):
+		'''
+		args:
+			TODO, same as above pretty much
 
-		assert(field in self.fields), "the field you have chosen is not available for analysis."
+		return:
+			ax object for plotting
+		'''
+
+		assert(data_type in self.data_types), "the data_type you have chosen is not available for analysis."
 
 		fig, ax = plt.subplots()
 
 		for asset in assets:
 			assert(asset in self.assets or asset == 'returns'), "the asset you have chosen is not in the portfolio."
 
-			data = getattr(self, asset)
+			df = getattr(self, asset)
 		
-			col_data = data[field].tolist()
+			col_data = df[data_type].tolist()
 
 			if plot_type == 'pct_change':
 				col_data = percent_change(col_data)
@@ -63,10 +67,7 @@ class Portfolio:
 				ax.plot(self.dates[start_idx:end_idx],col_data[start_idx:end_idx],label=f'{asset}',linewidth=0.5)
 			else:
 				ax.plot(self.dates[start_idx:end_idx],col_data[start_idx:end_idx],label=f'{self.name}',linewidth=0.5)
-		ax.xaxis.set_major_locator(mdates.YearLocator(3))
-		ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
-		ax.xaxis.set_minor_locator(mdates.YearLocator(3))
-		ax.xaxis.set_minor_formatter(mdates.DateFormatter('%Y'))
+
 		ax.legend()
 		ax.set_xlabel('Date')
 		if plot_type == 'pct_change':
@@ -76,18 +77,76 @@ class Portfolio:
 
 		return ax 
 
+	def gen_returns(self, asset, data_type, period):
+		'''
+		generates np.array of price process of given asset over the defined number of periods for the given data type
 
-# stock_list = ['AXP', 'AAPL', 'BA', 'CAT', 'CSCO', 'CVX', 'XOM', 'GS', 'HD', 'IBM', 'INTC', 'JNJ', \
-# 'KO', 'JPM', 'MCD', 'MMM', 'MRK', 'MSFT', 'NKE', 'PFE', 'PG', 'TRV', 'UNH', 'RTX', 'VZ', 'V', 'WBA', \
-# 'WMT', 'DIS', 'DOW']
+		args:
+			asset (str): the asset (in this case a stock) for which price process is constructed
+			data type (str): denotes data type of prices (open, high, low, close)
+		
+		return:
+			np.array of dates and corresponding return over num_periods
+		'''
 
-stock_list = ['AXP', 'AAPL', 'BA']
+		df = getattr(self, asset)
+		data = df[data_type].to_numpy()
+
+		return np.array([data[i] / data[i - period] - 1 if data[i] != 0 and data[i - period] != 0 else 0 for i in range(period, len(data)) ])
+
+	def gen_classes(self, asset, data_type):
+		'''
+		generates binary classes based on underlying portfolio's movement from day before (increase from day before = 1, decrease from day before = 0)
+
+		args:
+			asset (str): the asset for which classes are constructed
+			data type (str): data type of prices
+
+		return:
+			np.array of 1s and 0s
+		'''
+		df = getattr(self, asset)
+		data = df[data_type].to_numpy()
+
+		df = getattr(self, asset)
+		data = df[data_type].to_numpy()
+
+		return np.array([int(data[i] / data[i - 1] - 1 >= 0) if data[i] != 0 and data[i - 1] != 0 else 0 for i in range(1,len(data)) if data[i - 1] != 0])
+
+class Dataset:
+	'''
+	base class for data that will be loaded into the models and used for analysis
+
+	designed to be flexible with respect to feature selection and target selection  
+	'''
+	def __init__(self, pfolio_obj, data_type, feature_names, periods, target_name):
+		self.df = generate_df(pfolio_obj, data_type, feature_names, periods, target_name)
+		self.data_type = data_type
+		self.data = None
+		self.target = None
+		self.n_samples = None
+		self.n_features = None
+		self.n_classes = None
+
+	def statistics(self):
+		''' 
+		returns dict of summary statistics
+		'''
+
+		pass
+
+	def correlation(self):
+		pass
+
+	def whiten(self):
+		'''
+
+		'''
+		pass
+
+	def one_hot_encode(self):
+		pass
 
 
-dowjones = Portfolio('^DJIA',stock_list,yf.Ticker('^DJI').history('max'),period='max')
-
-ax1 = dowjones.plot(['returns'], 'Open', '1990-01-01', '2010-03-01')
-
-plt.show()
 
 

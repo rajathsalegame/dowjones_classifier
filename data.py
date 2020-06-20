@@ -4,6 +4,7 @@ import os
 import pandas as pd
 import yfinance as yf
 from datetime import datetime
+from scipy import stats
 from utils import *
 
 class Portfolio:
@@ -117,23 +118,47 @@ class Dataset:
 	'''
 	base class for data that will be loaded into the models and used for analysis
 
-	designed to be flexible with respect to feature selection and target selection  
+	designed to be flexible with respect to feature selection, return periods, target selection, and number of classes
+
+	default behavior turns off numpy mode to save memory in case of large datsets...can be turned on by accessing class method
 	'''
-	def __init__(self, pfolio_obj, data_type, feature_names, periods, target_name):
+	def __init__(self, pfolio_obj, data_type, feature_names, periods, target_name, numpy_mode=False):
 		self.df = generate_df(pfolio_obj, data_type, feature_names, periods, target_name)
 		self.data_type = data_type
-		self.data = None
-		self.target = None
-		self.n_samples = None
-		self.n_features = None
-		self.n_classes = None
+		self.n_samples = len(self.df.index)
+		self.n_features = len(self.df.columns)
+		self.n_classes = len(np.unique(self.df[target_name].to_numpy()))
+		self.data = self.df.drop(target_name,axis=1)
+		self.target = self.df[target_name]
 
-	def statistics(self):
+		if numpy_mode:
+			self.data = self.data.to_numpy()
+			self.target = self.target.to_numpy()
+	
+	def numpy_mode(self):
+		self.data = self.data.to_numpy()
+		self.target = self.data.to_numpy()
+
+	def statistics(self,features = 'all', ret_type='pandas'):
 		''' 
-		returns dict of summary statistics
+		returns pandas df or dict of desired summary statistics for given features using pandas and scipy.stats module
 		'''
 
-		pass
+		if features == 'all':
+			df_stats = self.data.describe()
+		else:
+			df_stats = self.df[feature_names].describe()
+
+		df_stats.loc['var'] = self.data.var()
+		df_stats.loc['kurtosis'] = self.data.kurtosis()
+		df_stats.loc['skewness'] = self.data.skew()
+		df_stats = df_stats.reindex(['count', 'mean', 'std', 'var', 'kurtosis', 'skewness', 'min', '25%', '50%', '75%', 'max'])
+		
+		if ret_type =='pandas':
+			return df_stats
+		else:
+			return df_stats.to_dict()
+
 
 	def correlation(self):
 		pass

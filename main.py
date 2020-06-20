@@ -24,8 +24,7 @@ def main():
 	periods = [10, 20]
 
 	data = Dataset(dowjones, 'Open', feature_names, periods, target_name)
-	print(data.df)
-
+	print(data.statistics(ret_type = 'dict'))
 
 if __name__ == '__main__':
 	main()

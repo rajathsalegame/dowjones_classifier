@@ -31,18 +31,16 @@ def generate_df(pfolio_obj, data_type, feature_names, periods,target_name,thresh
 
 	for (feat, period) in list(itertools.product(feature_names, periods)):
 		feat_df = getattr(pfolio_obj, feat)
-		df[(feat, period)] = pd.Series(data=pfolio_obj.gen_returns(feat, data_type, period), index=feat_df.index[period:])
+		df[f'{feat}, period = {period}'] = pd.Series(data=pfolio_obj.gen_returns(feat, data_type, period), index=feat_df.index[period:])
 
 	df[target_name] = pd.DataFrame(data=pfolio_obj.gen_classes(target_name, data_type), index=pfolio_obj.dates[1:], columns=[target_name])
 
 	# # drop columns where there are more than 25% values missing
 	# df = df.dropna(axis='columns',thresh=0.25*len(df.index))
 
-	# # drop rows for which there are any values missing
-	# df = df.dropna(how='any')
-
 	df = df.loc[df.index[max(periods)]:]
 
+	# drop columns where there are more than 25% values missing
 	df = df.dropna(axis='columns',thresh=0.25*len(df.index))
 
 	return df

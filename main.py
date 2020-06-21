@@ -9,22 +9,26 @@ def main():
 
 	stock_list = ['AXP', 'AAPL', 'BA', 'CAT', 'CSCO', 'CVX', 'XOM', 'GS', 'HD', 'IBM', 'INTC', 'JNJ', \
 	'KO', 'JPM', 'MCD', 'MMM', 'MRK', 'MSFT', 'NKE', 'PFE', 'PG', 'TRV', 'UNH', 'RTX', 'VZ', 'V', 'WBA', \
-	'WMT', 'DIS', 'DOW']
+	'WMT', 'DIS']
 
 
-	start = '2000-01-01'
-	end = '2019-06-18'
-	dowjones = Portfolio('^DJIA',stock_list,yf.Ticker('^DJI').history(start=start,end=end),start=start,end=end)
-
-	ax1 = dowjones.price_plot(['returns'], 'Open', '1970-01-01', '2010-03-01')
+	start = '1990-01-01'
+	end = '2020-01-01'
+	dowjones = Portfolio('^DJI',stock_list,yf.Ticker('^DJI').history(start=start,end=end),start=start,end=end)
+	ax = dowjones.price_plot(stock_list,'Open',start,end)
 	plt.show()
 
-	feature_names = ['AAPL', 'BA', 'MMM', 'MRK', 'MSFT', 'NKE', 'PFE', 'PG', 'TRV', 'UNH', 'RTX', 'VZ', 'V', 'WBA', 'WMT', 'DIS', 'DOW']
-	target_name = 'returns'
-	periods = [10, 20]
+	# feature_names = stock_list
+	# target_name = 'returns'
+	# periods = [10, 20]
 
-	data = Dataset(dowjones, 'Open', feature_names, periods, target_name)
-	print(data.statistics(ret_type = 'dict'))
+	# data = Dataset(dowjones, 'Open', feature_names, periods, target_name)
 
+
+	# corr_matrix = data.corr_plot(feature_names, periods)
+	# plt.show()
+
+	# df = data.statistics(feature_names,periods)
+	# print(df)
 if __name__ == '__main__':
 	main()

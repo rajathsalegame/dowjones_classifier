@@ -5,6 +5,7 @@ import pandas as pd
 import yfinance as yf
 from datetime import datetime
 from scipy import stats
+import seaborn as sns
 from utils import *
 
 class Portfolio:
@@ -56,21 +57,23 @@ class Portfolio:
 			assert(asset in self.assets or asset == 'returns'), "the asset you have chosen is not in the portfolio."
 
 			df = getattr(self, asset)
-		
 			col_data = df[data_type].tolist()
+
+			dates = list(df.index)
 
 			if plot_type == 'pct_change':
 				col_data = percent_change(col_data)
 
-			start_date, start_idx = nearest_date(start, self.dates)
-			end_date, end_idx = nearest_date(end, self.dates)
+			start_date, start_idx = nearest_date(start, dates)
+			end_date, end_idx = nearest_date(end, dates)
 			if asset != 'returns':
-				ax.plot(self.dates[start_idx:end_idx],col_data[start_idx:end_idx],label=f'{asset}',linewidth=0.5)
+				ax.plot(dates[start_idx:end_idx], col_data[start_idx:end_idx],label=f'{asset}',linewidth=0.5)
 			else:
-				ax.plot(self.dates[start_idx:end_idx],col_data[start_idx:end_idx],label=f'{self.name}',linewidth=0.5)
+				ax.plot(dates[start_idx:end_idx],col_data[start_idx:end_idx],label=f'{self.name}',linewidth=0.5)
 
 		ax.legend()
 		ax.set_xlabel('Date')
+		ax.set_title(f'{data_type} Share Prices in USD vs. Time')
 		if plot_type == 'pct_change':
 			ax.set_ylabel('Percent change in USD (%)')
 		else:
@@ -112,7 +115,7 @@ class Portfolio:
 		df = getattr(self, asset)
 		data = df[data_type].to_numpy()
 
-		return np.array([int(data[i] / data[i - 1] - 1 >= 0) if data[i] != 0 and data[i - 1] != 0 else 0 for i in range(1,len(data)) if data[i - 1] != 0])
+		return np.array([int(data[i+1] / data[i] - 1 >= 0) if data[i+1] != 0 and data[i] != 0 else 0 for i in range(len(data)-1)])
 
 class Dataset:
 	'''
@@ -120,7 +123,7 @@ class Dataset:
 
 	designed to be flexible with respect to feature selection, return periods, target selection, and number of classes
 
-	default behavior turns off numpy mode to save memory in case of large datsets...can be turned on by accessing class method
+	default behavior turns off numpy mode; can be turned on to save memory in case of large datsets and when ready to train on model 
 	'''
 	def __init__(self, pfolio_obj, data_type, feature_names, periods, target_name, numpy_mode=False):
 		self.df = generate_df(pfolio_obj, data_type, feature_names, periods, target_name)
@@ -130,6 +133,7 @@ class Dataset:
 		self.n_classes = len(np.unique(self.df[target_name].to_numpy()))
 		self.data = self.df.drop(target_name,axis=1)
 		self.target = self.df[target_name]
+		self.features = list(itertools.product(feature_names, periods))
 
 		if numpy_mode:
 			self.data = self.data.to_numpy()
@@ -139,15 +143,16 @@ class Dataset:
 		self.data = self.data.to_numpy()
 		self.target = self.data.to_numpy()
 
-	def statistics(self,features = 'all', ret_type='pandas'):
+		# to save memory in case of extremely large matrices
+		del self.df 
+
+	def statistics(self,features, periods, ret_type='pandas'):
 		''' 
 		returns pandas df or dict of desired summary statistics for given features using pandas and scipy.stats module
 		'''
 
-		if features == 'all':
-			df_stats = self.data.describe()
-		else:
-			df_stats = self.df[feature_names].describe()
+		feats = list(itertools.product(features, periods))
+		df_stats = self.df[feats].describe()
 
 		df_stats.loc['var'] = self.data.var()
 		df_stats.loc['kurtosis'] = self.data.kurtosis()
@@ -160,9 +165,20 @@ class Dataset:
 			return df_stats.to_dict()
 
 
-	def correlation(self):
-		pass
+	def corr_plot(self,features,periods):
 
+		corr_df = self.data.corr()
+
+		cmap=sns.diverging_palette(5, 250, as_cmap=True)
+
+		corr_df.style.background_gradient(cmap, axis=1)\
+    	.set_properties(**{'max-width': '80px', 'font-size': '10pt'})\
+	    .set_caption("Hover to magify")\
+	    .set_precision(2)\
+	    .set_table_styles(magnify())
+
+		return sns.heatmap(corr_df,xticklabels=corr_df.columns,yticklabels=corr_df.columns,annot=True)
+		
 	def whiten(self):
 		'''
 

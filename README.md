@@ -1,7 +1,7 @@
 # Dow Jones Classifier
 A pseudo-replication of Krauss et al., 2016's paper about statistical arbitrage on the S&amp;P500. 
 
-IMPLEMENTED:
+### Implemented:
 
 - Portfolio class for generic portfolio with returns and assets in the form of pandas dataframe
 - Custom plotting functions / multiperiod return for Portfolio class
@@ -9,7 +9,7 @@ IMPLEMENTED:
 - Utility functions for general purpose use
 - Preliminary scratchwork of XGBoost binary classifier on Dow Jones data from 1990 with ROC of 0.85
 
-TODO:
+### To do:
 
 - Generalization of Dataset class to handle multiple classification/regression tasks with custom target definition
 - More functions for pre-ML analysis
@@ -17,7 +17,7 @@ TODO:
 - Clean up code / add better docstrings...
 - More sophisticated models/more organized writeup
 
-NOTES:
+### Notes:
 
 The conda environment used to develop this project can be found in `requirements.txt`. To install from this list, do the following:
 

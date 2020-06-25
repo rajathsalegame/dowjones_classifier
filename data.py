@@ -125,26 +125,15 @@ class Dataset:
 
 	default behavior turns off numpy mode; can be turned on to save memory in case of large datsets and when ready to train on model 
 	'''
-	def __init__(self, pfolio_obj, data_type, feature_names, periods, target_name, numpy_mode=False):
+	def __init__(self, pfolio_obj, data_type, feature_names, periods, target_name):
 		self.df = generate_df(pfolio_obj, data_type, feature_names, periods, target_name)
 		self.data_type = data_type
-		self.n_samples = len(self.df.index)
-		self.n_features = len(self.df.columns)
-		self.n_classes = len(np.unique(self.df[target_name].to_numpy()))
 		self.data = self.df.drop(target_name,axis=1)
 		self.target = self.df[target_name]
 		self.features = list(itertools.product(feature_names, periods))
-
-		if numpy_mode:
-			self.data = self.data.to_numpy()
-			self.target = self.target.to_numpy()
-	
-	def numpy_mode(self):
-		self.data = self.data.to_numpy()
-		self.target = self.data.to_numpy()
-
-		# to save memory in case of extremely large matrices
-		del self.df 
+		self.n_samples = len(self.data.index)
+		self.n_features = len(self.data.columns)
+		self.n_classes = len(np.unique(self.df[target_name].to_numpy()))
 
 	def statistics(self,features, periods, ret_type='pandas'):
 		''' 
@@ -178,15 +167,6 @@ class Dataset:
 	    .set_table_styles(magnify())
 
 		return sns.heatmap(corr_df,xticklabels=corr_df.columns,yticklabels=corr_df.columns,annot=True)
-		
-	def whiten(self):
-		'''
-
-		'''
-		pass
-
-	def one_hot_encode(self):
-		pass
 
 
 

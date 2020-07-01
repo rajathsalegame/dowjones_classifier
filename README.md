@@ -1,5 +1,5 @@
 # Dow Jones Classifier
-A pseudo-replication of Krauss et al., 2016's paper about statistical arbitrage on the S&amp;P500-here, we deal with a smaller/easier set of data correspondong to the Dow Jones.
+A pseudo-replication of Krauss et al., 2016's paper about statistical arbitrage on the S&amp;P500-here, we apply similar methodologies to the Dow Jones.
 
 ### Implemented:
 

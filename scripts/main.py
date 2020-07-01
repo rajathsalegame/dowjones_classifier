@@ -1,16 +1,16 @@
 from data import Portfolio, Dataset
-from utils import *
 import yfinance as yf
 import matplotlib.pyplot as plt
-import pandas as pd
+import pandas as pda
 
 
 def main():
+	'''
+	playground for testing out code! 
 
-	stock_list = ['AXP', 'AAPL', 'BA', 'CAT', 'CSCO', 'CVX', 'XOM', 'GS', 'HD', 'IBM', 'INTC', 'JNJ', \
-	'KO', 'JPM', 'MCD', 'MMM', 'MRK', 'MSFT', 'NKE', 'PFE', 'PG', 'TRV', 'UNH', 'RTX', 'VZ', 'V', 'WBA', \
-	'WMT', 'DIS']
+	'''
 
+	stock_list = ['AAPL']
 
 	start = '1990-01-01'
 	end = '2020-01-01'
@@ -18,17 +18,21 @@ def main():
 	ax = dowjones.price_plot(stock_list,'Open',start,end)
 	plt.show()
 
+	params = {'pfolio_obj': dowjones, 'data_type': 'Close', 'feature_names': stock_list, 'periods': [10, 20], 'horizon': 3, 'target_name': 'returns', 'task_type': 'classification'}
+
 	# feature_names = stock_list
 	# target_name = 'returns'
 	# periods = [10, 20]
 
-	# data = Dataset(dowjones, 'Open', feature_names, periods, target_name)
-
+	data = Dataset(**params)
+	print(data.df.tail())
 
 	# corr_matrix = data.corr_plot(feature_names, periods)
 	# plt.show()
 
 	# df = data.statistics(feature_names,periods)
 	# print(df)
+
+
 if __name__ == '__main__':
 	main()

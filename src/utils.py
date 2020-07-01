@@ -22,7 +22,7 @@ def nearest_date(date,date_list):
 def percent_change(lst):
 	return [100*(lst[i+1] - lst[i]) / lst[i] for i in range(len(lst) - 1)]
 
-def generate_df(pfolio_obj, data_type, feature_names, periods,target_name,thresh=0.25):
+def generate_df(pfolio_obj, data_type, feature_names, periods, horizon, target_name,task_type):
 	''' 
 	generates cleaned up pandas dataframe
 	'''
@@ -31,15 +31,14 @@ def generate_df(pfolio_obj, data_type, feature_names, periods,target_name,thresh
 
 	for (feat, period) in list(itertools.product(feature_names, periods)):
 		feat_df = getattr(pfolio_obj, feat)
-		df[(feat, period)] = pd.Series(data=pfolio_obj.gen_returns(feat, data_type, period), index=feat_df.index[period:])
+		df[(feat, period)] = pd.Series(data=pfolio_obj.gen_bwd_returns(feat, data_type, period), index=feat_df.index[period:])
 
-	df[target_name] = pd.DataFrame(data=pfolio_obj.gen_classes(target_name, data_type), index=pfolio_obj.dates[1:], columns=[target_name])
+	df[target_name] = pd.DataFrame(data=pfolio_obj.gen_fwd_returns(target_name, data_type, horizon, task_type), index=pfolio_obj.dates[:-horizon], columns=[target_name])
 
+	# prune to make sure there are no NaNs for backward returns
 	df = df.loc[df.index[max(periods)]:]
-
-	# drop columns where there are more than 25% values missing
-	# df = df.dropna(axis='columns',thresh=0.25*len(df.index))
-
+	# prune to make sure there are no NaNs for forward returns
+	df = df.loc[:df.index[-(horizon + 1)]]
 	return df
 
 def magnify():

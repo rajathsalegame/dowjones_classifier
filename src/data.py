@@ -81,9 +81,9 @@ class Portfolio:
 
 		return ax 
 
-	def gen_returns(self, asset, data_type, period):
+	def gen_bwd_returns(self, asset, data_type, period):
 		'''
-		generates np.array of price process of given asset over the defined number of periods for the given data type
+		generates np.array of return process of given asset over the defined number of periods for the given data type
 
 		args:
 			asset (str): the asset (in this case a stock) for which price process is constructed
@@ -96,15 +96,16 @@ class Portfolio:
 		df = getattr(self, asset)
 		data = df[data_type].to_numpy()
 
-		return np.array([data[i] / data[i - period] - 1 if data[i] != 0 and data[i - period] != 0 else 0 for i in range(period, len(data)) ])
+		return np.array([data[i] / data[i - period] - 1 if data[i] != 0 and data[i - period] != 0 else 0 for i in range(period, len(data))])
 
-	def gen_classes(self, asset, data_type):
+	def gen_fwd_returns(self, asset, data_type, horizon=1, task_type='classification'):
 		'''
-		generates binary classes based on underlying portfolio's movement from day before (increase from day before = 1, decrease from day before = 0)
+		generates returns based on underlying portfolio's movement from present day to day + horizon
 
 		args:
 			asset (str): the asset for which classes are constructed
 			data type (str): data type of prices
+			horizon (int): future time with respect to which returns are calculated 
 
 		return:
 			np.array of 1s and 0s
@@ -115,7 +116,10 @@ class Portfolio:
 		df = getattr(self, asset)
 		data = df[data_type].to_numpy()
 
-		return np.array([int(data[i+1] / data[i] - 1 >= 0) if data[i+1] != 0 and data[i] != 0 else 0 for i in range(len(data)-1)])
+		if task_type == 'classification':
+			return np.array([int(data[i+horizon] / data[i] - 1 >= 0) if data[i+horizon] != 0 and data[i] != 0 else 0 for i in range(len(data)-horizon)])
+		elif task_type == 'regression':
+			return np.array([data[i+horizon] / data[i] - 1 if data[i+horizon] != 0 and data[i] != 0 else 0 for i in range(len(data)-horizon)])
 
 class Dataset:
 	'''
@@ -125,8 +129,8 @@ class Dataset:
 
 	default behavior turns off numpy mode; can be turned on to save memory in case of large datsets and when ready to train on model 
 	'''
-	def __init__(self, pfolio_obj, data_type, feature_names, periods, target_name):
-		self.df = generate_df(pfolio_obj, data_type, feature_names, periods, target_name)
+	def __init__(self, pfolio_obj, data_type, feature_names, periods, horizon, target_name, task_type):
+		self.df = generate_df(pfolio_obj, data_type, feature_names, periods, horizon, target_name, task_type)
 		self.data_type = data_type
 		self.data = self.df.drop(target_name,axis=1)
 		self.target = self.df[target_name]
@@ -155,6 +159,10 @@ class Dataset:
 
 
 	def corr_plot(self,features,periods):
+		''' 
+		returns interactive map of correlation between features
+
+		'''
 
 		corr_df = self.data.corr()
 

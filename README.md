@@ -26,4 +26,12 @@ conda create -n yourenv pip
 pip install -r requirements.txt
 ```
 
+If, for whatever bizarre reason, you want to use this highly, highly (I repeat, highly) experimental and non-error safe code, simply navigate to the directory you wish and do the following in your terminal (if you're using bash):
+
+```bash
+git clone https://github.com/rajathsalegame/dowjones_classifier.git
+export PYTHONPATH=$(pwd)/src:$PYTHONPATH
+```
+
+This is just a temporary and probably highly unoptimal solution; if I think it's interesting and fun to develop this further, I might try and develop this into a more rigorous software package.
 

@@ -53,6 +53,9 @@ def magnify():
                         ('font-size', '12pt')])
 			]
 
+def test():
+	return None
+
 
 
 
